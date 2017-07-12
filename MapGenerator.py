@@ -8,8 +8,10 @@ except ImportError:
 import numpy
 
 FRAME_WIDTH = 500
-DEFAULT_SIZE = 10
-DEFAULT_PROBABILITY = 0.5
+DEFAULT_SIZE = 50
+DEFAULT_PROBABILITY = 0.2
+PATH_NOT_FOUND = "Path not found"
+PATH_FOUND = "Found path"
 
 
 class Map:
@@ -37,7 +39,7 @@ class Map:
         self.map[0, 0] = self.map[size - 1, size - 1] = 0
 
         # Path from start to finish
-        self.solved_path = []
+        self.solved_path = ["N/A", "N/A", []]
 
     def connected_cells(self, cell):
         """
@@ -79,13 +81,13 @@ class Map:
                 if (x == 0 and y == 0) or (x == (self.size - 1) and y == (self.size - 1)):
                     canvas.draw_polygon([(x * width, y * width), ((x + 1) * width, y * width),
                                          ((x + 1) * width, (y + 1) * width), ((x * width), (y + 1) * width)], 1,
-                                        "Black", "#ED1C24")
+                                        "Black", "Red")
                 # Draw other cells
                 else:
-                    if (x, y) in self.solved_path:
+                    if (x, y) in self.solved_path[2]:
                         canvas.draw_polygon([(x * width, y * width), ((x + 1) * width, y * width),
                                              ((x + 1) * width, (y + 1) * width), ((x * width), (y + 1) * width)], 1,
-                                            "Black", "#F68E55")
+                                            "Black", "Yellow")
                     else:
                         if self.map[x, y] == 0:
                             canvas.draw_polygon([(x * width, y * width), ((x + 1) * width, y * width),
@@ -94,7 +96,7 @@ class Map:
                         else:
                             canvas.draw_polygon([(x * width, y * width), ((x + 1) * width, y * width),
                                                  ((x + 1) * width, (y + 1) * width), ((x * width), (y + 1) * width)], 1,
-                                                "Black", "Black")
+                                                "Black", "#754C24")
 
 
 class Solution:
@@ -106,6 +108,11 @@ class Solution:
         self.end_position = (a_map.size - 1, a_map.size - 1)
 
     def build_path(self, path_dictionary):
+        """
+        Build a path (list) from a dictionary of parent cell -> child cell
+        :param path_dictionary: (dic) (child.x, child,y) -> (parent.x, parent.y) Child:key, Parent:value
+        :return: list of path from start to finish
+        """
         path = []
         current = path_dictionary[self.end_position]
         while current!=(0,0):
@@ -114,6 +121,10 @@ class Solution:
         return path[::-1]
 
     def dfs(self):
+        """
+        Find path using Depth First Search
+        :return: list of status and path (if found)
+        """
         stack = [self.start_position]
         visited = set()
         parentCell = {}
@@ -121,15 +132,16 @@ class Solution:
         while stack:
             cell = stack.pop()
             if cell == self.end_position:
-                return self.build_path(parentCell)
+                path = self.build_path(parentCell)
+                return [PATH_FOUND, len(path), path]
 
-            for n in self.a_map.connected_cells(cell):
-                if n not in visited:
-                    parentCell[n] = cell
-                    stack.append(n)
-                    visited.add(n)
+            for child in self.a_map.connected_cells(cell):
+                if child not in visited:
+                    parentCell[child] = cell
+                    stack.append(child)
+                    visited.add(child)
 
-        return []
+        return [PATH_NOT_FOUND, "N/A", []]
 
 
 def generate_map():
@@ -146,18 +158,35 @@ def draw_handler(canvas):
 def input_handler():
     return
 
+def solve_with_dfs():
+    global current_map
+    current_map.solved_path = Solution(current_map).dfs()
+    update()
+
+def update():
+    status.set_text("STATUS: " + current_map.solved_path[0])
+    path_length.set_text("PATH LENGTH: " + str(current_map.solved_path[1]))
+
 
 current_map = Map(DEFAULT_SIZE, DEFAULT_PROBABILITY)
-current_map.solved_path = Solution(current_map).dfs()
 
 frame = simplegui.create_frame('Assignment 1', FRAME_WIDTH, FRAME_WIDTH)
-frame.add_button("Generate Map", generate_map)
+frame.add_button("Generate Map", generate_map, 100)
 frame.set_draw_handler(draw_handler)
-
-#
 input_size = frame.add_input('Size', input_handler, 50)
 input_size.set_text(str(DEFAULT_SIZE))
-input_probability = frame.add_input("Probability", input_handler, 100)
+input_probability = frame.add_input("Probability", input_handler, 50)
 input_probability.set_text(str(DEFAULT_PROBABILITY))
+
+# Solve with
+frame.add_label("")
+frame.add_label("Algorithm")
+frame.add_button("DFS", solve_with_dfs, 100)
+
+# Display status
+frame.add_label("")
+status = frame.add_label("STATUS: " + current_map.solved_path[0])
+path_length = frame.add_label("PATH LENGTH: " + str(current_map.solved_path[1]))
+
 
 frame.start()
