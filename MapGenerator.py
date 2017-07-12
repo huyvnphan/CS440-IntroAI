@@ -37,7 +37,7 @@ class Map:
         self.map[0, 0] = self.map[size - 1, size - 1] = 0
 
         # Dictionary of solution information
-        self.solution = {"Status": "N/A", "Visited cells": [], "Path": [], "Path length": 0}
+        self.solution = {"Status": "N/A", "Visited cells": [], "Path": [], "Path length": "N/A"}
 
     def connected_cells(self, cell):
         """
@@ -119,7 +119,7 @@ class FindSolution:
     def dfs(self):
         """
         Find path using Depth First Search
-        :return: list of status and path (if found)
+        :return: list of status, visited cell, path, and path length
         """
         stack = [self.start_position]
         visited = set(self.start_position)
@@ -129,7 +129,7 @@ class FindSolution:
             cell = stack.pop()
             if cell == self.end_position:
                 path = self.build_path(parent_cell)
-                return {"Status": "Found path", "Visited cells": visited, "Path": path, "Path length": len(path)}
+                return {"Status": "Found Path", "Visited cells": visited, "Path": path, "Path length": len(path)}
 
             for child in self.a_map.connected_cells(cell):
                 if child not in visited:
@@ -137,23 +137,23 @@ class FindSolution:
                     stack.append(child)
                     visited.add(child)
 
-        return {"Status": "Path not found", "Visited cells": visited, "Path": [], "Path length": 0}
+        return {"Status": "Path Not Found!", "Visited cells": visited, "Path": [], "Path length": "N/A"}
 
     def bfs(self):
         """
-        Find path using Depth First Search
-        :return: list of status and path (if found)
+        Find path using Breadth First Search
+        :return: list of status, visited cell, path, and path length
         """
         a_queue = queue.Queue()
         a_queue.put(self.start_position)
         visited = set(self.start_position)
         parent_cell = {}
 
-        while a_queue:
+        while not a_queue.empty():
             cell = a_queue.get()
             if cell == self.end_position:
                 path = self.build_path(parent_cell)
-                return {"Status": "Found path", "Visited cells": visited, "Path": path, "Path length": len(path)}
+                return {"Status": "Found Path", "Visited cells": visited, "Path": path, "Path length": len(path)}
 
             for child in self.a_map.connected_cells(cell):
                 if child not in visited:
@@ -161,12 +161,13 @@ class FindSolution:
                     a_queue.put(child)
                     visited.add(child)
 
-        return {"Status": "Path not found", "Visited cells": visited, "Path": [], "Path length": 0}
+        return {"Status": "Path Not Found!", "Visited cells": visited, "Path": [], "Path length": "N/A"}
 
 
 def generate_map():
     global current_map
     current_map = Map(int(input_size.get_text()), float(input_probability.get_text()))
+    update()
     return
 
 
@@ -183,10 +184,12 @@ def solve_with_dfs():
     current_map.solution = FindSolution(current_map).dfs()
     update()
 
+
 def solve_with_bfs():
     global current_map
     current_map.solution = FindSolution(current_map).bfs()
     update()
+
 
 def update():
     status_label.set_text("STATUS: " + current_map.solution["Status"])
@@ -195,6 +198,7 @@ def update():
 
 current_map = Map(DEFAULT_SIZE, DEFAULT_PROBABILITY)
 
+# Create frame and control UI
 frame = simplegui.create_frame('Assignment 1', FRAME_WIDTH, FRAME_WIDTH)
 frame.add_button("Generate Map", generate_map, 100)
 frame.set_draw_handler(draw_handler)
@@ -203,16 +207,15 @@ input_size.set_text(str(DEFAULT_SIZE))
 input_probability = frame.add_input("Probability", input_handler, 50)
 input_probability.set_text(str(DEFAULT_PROBABILITY))
 
-# Solve with
+# Algorithms
 frame.add_label("")
 frame.add_label("Algorithm")
 frame.add_button("DFS", solve_with_dfs, 100)
 frame.add_button("BFS", solve_with_bfs, 100)
 
-
 # Display status
 frame.add_label("")
-status_label = frame.add_label("STATUS: N/A]")
+status_label = frame.add_label("STATUS: N/A")
 path_length_label = frame.add_label("PATH LENGTH: N/A")
 
 frame.start()
