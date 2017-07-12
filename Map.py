@@ -130,7 +130,7 @@ class Solution():
         :return: solution and path
         """
         sol = self.map.map.copy().tolist()
-        print sol[0][1]
+        print(sol[0][1])
         start = np.array([0, 0])
         queue = []
         queue.append(start)
@@ -180,7 +180,7 @@ class Solution():
         elif heuristic == 'eu':
             heu = self.euclidean
         sol = self.map.map.copy().tolist()
-        print sol[0][1]
+        print(sol[0][1])
         start = np.array([0, 0])
         queue = []
         hpq.heappush(queue, (0, next(TIE), start))
@@ -228,18 +228,18 @@ mySol = Solution(myMap)
 # print (mySol.check_bound((1,7)))
 # print(isNeighbor(np.array([6, 7]), np.array([5, 7])))
 path, sol = mySol.DFS()
-print sol
-print list(path)
-print len(path)
+print (sol)
+print (list(path))
+print (len(path))
 path, sol = mySol.BFS()
-print sol
-print path
-print len(path)
+print (sol)
+print (path)
+print (len(path))
 path, sol = mySol.As_manhattan()
-print sol
-print path
-print len(path)
+print (sol)
+print (path)
+print (len(path))
 path, sol = mySol.As_manhattan(heuristic='eu')
-print sol
-print path
-print len(path)
+print (sol)
+print (path)
+print (len(path))
