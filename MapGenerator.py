@@ -5,13 +5,11 @@ except ImportError:
     import SimpleGUICS2Pygame.simpleguics2pygame as simplegui
 
 # Import Matrix generator module
-import numpy
+import numpy, queue
 
 FRAME_WIDTH = 500
 DEFAULT_SIZE = 50
 DEFAULT_PROBABILITY = 0.2
-PATH_NOT_FOUND = "Path not found"
-PATH_FOUND = "Found path"
 
 
 class Map:
@@ -38,8 +36,8 @@ class Map:
         # Set start and finish
         self.map[0, 0] = self.map[size - 1, size - 1] = 0
 
-        # Path from start to finish
-        self.solved_path = ["N/A", "N/A", []]
+        # Dictionary of solution information
+        self.solution = {"Status": "N/A", "Visited cells": [], "Path": [], "Path length": 0}
 
     def connected_cells(self, cell):
         """
@@ -50,7 +48,7 @@ class Map:
         x = cell[0]
         y = cell[1]
         connected_cells = set()
-        all_possible_cells = [(x, y-1), (x+1, y), (x, y+1), (x-1,y)]
+        all_possible_cells = [(x, y - 1), (x + 1, y), (x, y + 1), (x - 1, y)]
         for (i, j) in all_possible_cells:
             if self.in_bounds((i, j)):
                 if self.map[i, j] == 0:
@@ -77,29 +75,27 @@ class Map:
         width = FRAME_WIDTH / self.size
         for x in range(0, self.size):
             for y in range(0, self.size):
+                points = [(x * width, y * width), ((x + 1) * width, y * width),
+                          ((x + 1) * width, (y + 1) * width), ((x * width), (y + 1) * width)]
+
                 # Draw first and last cell
-                if (x == 0 and y == 0) or (x == (self.size - 1) and y == (self.size - 1)):
-                    canvas.draw_polygon([(x * width, y * width), ((x + 1) * width, y * width),
-                                         ((x + 1) * width, (y + 1) * width), ((x * width), (y + 1) * width)], 1,
-                                        "Black", "Red")
-                # Draw other cells
+                if (x, y) == (0, 0) or (x, y) == (self.size - 1, self.size - 1):
+                    canvas.draw_polygon(points, 1, "Black", "#00FF00")
+                # Draw path from start to finish
+                elif (x, y) in self.solution["Path"]:
+                    canvas.draw_polygon(points, 1, "Black", "#F44336")
+                # Draw visited cells
+                elif (x, y) in self.solution["Visited cells"] and (x, y) not in self.solution["Path"]:
+                    canvas.draw_polygon(points, 1, "Black", "#FFCDD2")
+                # Draw empty cells
+                elif self.map[x, y] == 0:
+                    canvas.draw_polygon(points, 1, "Black", "White")
+                # Draw walls
                 else:
-                    if (x, y) in self.solved_path[2]:
-                        canvas.draw_polygon([(x * width, y * width), ((x + 1) * width, y * width),
-                                             ((x + 1) * width, (y + 1) * width), ((x * width), (y + 1) * width)], 1,
-                                            "Black", "Yellow")
-                    else:
-                        if self.map[x, y] == 0:
-                            canvas.draw_polygon([(x * width, y * width), ((x + 1) * width, y * width),
-                                                 ((x + 1) * width, (y + 1) * width), ((x * width), (y + 1) * width)], 1,
-                                                "Black", "White")
-                        else:
-                            canvas.draw_polygon([(x * width, y * width), ((x + 1) * width, y * width),
-                                                 ((x + 1) * width, (y + 1) * width), ((x * width), (y + 1) * width)], 1,
-                                                "Black", "#754C24")
+                    canvas.draw_polygon(points, 1, "Black", "#464646")
 
 
-class Solution:
+class FindSolution:
     def __init__(self, a_map):
         self.a_map = a_map
         self.time = 0
@@ -115,7 +111,7 @@ class Solution:
         """
         path = []
         current = path_dictionary[self.end_position]
-        while current!=(0,0):
+        while current != (0, 0):
             path += (current,)
             current = path_dictionary[current]
         return path[::-1]
@@ -126,22 +122,46 @@ class Solution:
         :return: list of status and path (if found)
         """
         stack = [self.start_position]
-        visited = set()
-        parentCell = {}
+        visited = set(self.start_position)
+        parent_cell = {}
 
         while stack:
             cell = stack.pop()
             if cell == self.end_position:
-                path = self.build_path(parentCell)
-                return [PATH_FOUND, len(path), path]
+                path = self.build_path(parent_cell)
+                return {"Status": "Found path", "Visited cells": visited, "Path": path, "Path length": len(path)}
 
             for child in self.a_map.connected_cells(cell):
                 if child not in visited:
-                    parentCell[child] = cell
+                    parent_cell[child] = cell
                     stack.append(child)
                     visited.add(child)
 
-        return [PATH_NOT_FOUND, "N/A", []]
+        return {"Status": "Path not found", "Visited cells": visited, "Path": [], "Path length": 0}
+
+    def bfs(self):
+        """
+        Find path using Depth First Search
+        :return: list of status and path (if found)
+        """
+        a_queue = queue.Queue()
+        a_queue.put(self.start_position)
+        visited = set(self.start_position)
+        parent_cell = {}
+
+        while a_queue:
+            cell = a_queue.get()
+            if cell == self.end_position:
+                path = self.build_path(parent_cell)
+                return {"Status": "Found path", "Visited cells": visited, "Path": path, "Path length": len(path)}
+
+            for child in self.a_map.connected_cells(cell):
+                if child not in visited:
+                    parent_cell[child] = cell
+                    a_queue.put(child)
+                    visited.add(child)
+
+        return {"Status": "Path not found", "Visited cells": visited, "Path": [], "Path length": 0}
 
 
 def generate_map():
@@ -152,20 +172,25 @@ def generate_map():
 
 def draw_handler(canvas):
     current_map.draw_map(canvas)
-    return
 
 
 def input_handler():
     return
 
+
 def solve_with_dfs():
     global current_map
-    current_map.solved_path = Solution(current_map).dfs()
+    current_map.solution = FindSolution(current_map).dfs()
+    update()
+
+def solve_with_bfs():
+    global current_map
+    current_map.solution = FindSolution(current_map).bfs()
     update()
 
 def update():
-    status.set_text("STATUS: " + current_map.solved_path[0])
-    path_length.set_text("PATH LENGTH: " + str(current_map.solved_path[1]))
+    status_label.set_text("STATUS: " + current_map.solution["Status"])
+    path_length_label.set_text("PATH LENGTH: " + str(current_map.solution["Path length"]))
 
 
 current_map = Map(DEFAULT_SIZE, DEFAULT_PROBABILITY)
@@ -182,11 +207,12 @@ input_probability.set_text(str(DEFAULT_PROBABILITY))
 frame.add_label("")
 frame.add_label("Algorithm")
 frame.add_button("DFS", solve_with_dfs, 100)
+frame.add_button("BFS", solve_with_bfs, 100)
+
 
 # Display status
 frame.add_label("")
-status = frame.add_label("STATUS: " + current_map.solved_path[0])
-path_length = frame.add_label("PATH LENGTH: " + str(current_map.solved_path[1]))
-
+status_label = frame.add_label("STATUS: N/A]")
+path_length_label = frame.add_label("PATH LENGTH: N/A")
 
 frame.start()
