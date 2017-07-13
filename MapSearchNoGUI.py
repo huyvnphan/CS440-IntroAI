@@ -1,19 +1,8 @@
-# Import the GUI Module.
-try:
-    import simplegui
-except ImportError:
-    import SimpleGUICS2Pygame.simpleguics2pygame as simplegui
-
 # Import Matrix generator module
 import numpy
 import queue
+import math
 
-FRAME_WIDTH = 700
-DEFAULT_SIZE = 60
-DEFAULT_PROBABILITY = 0.2
-COLOR_LIST = [["#F44336", "#FFCDD2"], ["#2196F3", "#BBDEFB"], ["#4CAF50", "#C8E6C9"],
-              ["#FF9800", "#FFE0B2"], ["#E91E63", "#F8BBD0"], ["#9C27B0", "#E1BEE7"]]
-color = []
 
 class Map:
     def __init__(self, size, probability):
@@ -73,30 +62,10 @@ class Map:
     def print_map(self):
         print(self.map)
 
-    # Draw map on canvas
-    def draw_map(self, canvas):
-        # Determine the width of each cell
-        width = FRAME_WIDTH / self.size
-        for x in range(0, self.size):
-            for y in range(0, self.size):
-                points = [(x * width, y * width), ((x + 1) * width, y * width),
-                          ((x + 1) * width, (y + 1) * width), ((x * width), (y + 1) * width)]
-
-                # Draw first and last cell
-                if (x, y) == (0, 0) or (x, y) == (self.size - 1, self.size - 1):
-                    canvas.draw_polygon(points, 1, "Black", "#00FF00")
-                # Draw path from start to finish
-                elif (x, y) in self.solution["Path"]:
-                    canvas.draw_polygon(points, 1, "Black", color[0])
-                # Draw visited cells
-                elif (x, y) in self.solution["Visited cells"] and (x, y) not in self.solution["Path"]:
-                    canvas.draw_polygon(points, 1, "Black", color[1])
-                # Draw empty cells
-                elif self.map[x, y] == 0:
-                    canvas.draw_polygon(points, 1, "Black", "White")
-                # Draw walls
-                else:
-                    canvas.draw_polygon(points, 1, "Black", "#464646")
+    def print_solution(self):
+        print("Status: " + self.solution["Status"])
+        print("No of visited cells: " + str(self.solution["No of visited cells"]))
+        print("Path length: " + str(self.solution["Path length"]))
 
 
 class FindSolution:
@@ -178,63 +147,57 @@ class FindSolution:
         return {"Status": "Path Not Found!!!", "Visited cells": visited,
                 "No of visited cells": len(visited), "Path": [], "Path length": "N/A"}
 
+    def a_star(self, heuristic):
+        priority_queue = queue.PriorityQueue()
+        visited = set()
+        parent_cell = {}
+        cost_so_far = {}
 
-def generate_map():
-    global current_map
-    current_map = Map(int(input_size.get_text()), float(input_probability.get_text()))
-    update()
+        priority_queue.put((0, self.start_position))
+        visited.add(self.start_position)
+        cost_so_far[self.start_position] = 0
 
+        while not priority_queue.empty():
+            current_cell = priority_queue.get()
+            current_cell = current_cell[1]
+            if current_cell == self.end_position:
+                path = self.build_path(parent_cell)
+                return {"Status": "Found Path", "Visited cells": visited,
+                        "No of visited cells": len(visited), "Path": path, "Path length": len(path)}
 
-def draw_handler(canvas):
-    current_map.draw_map(canvas)
+            for next_cell in self.a_map.connected_cells(current_cell):
+                new_cost = cost_so_far[current_cell] + 1
+                if next_cell not in visited:  # or new_cost < cost_so_far[next_cell]:
+                    cost_so_far[next_cell] = new_cost
+                    parent_cell[next_cell] = current_cell
+                    visited.add(next_cell)
 
+                    priority = new_cost + self.find_heuristic(next_cell, heuristic)
+                    priority_queue.put((priority, next_cell))
 
-def input_handler():
-    pass
+        return {"Status": "Path Not Found!!!", "Visited cells": visited,
+                "No of visited cells": len(visited), "Path": [], "Path length": "N/A"}
 
-
-def solve_with_dfs():
-    global current_map, color
-    color = COLOR_LIST[0]
-    current_map.solution = FindSolution(current_map).dfs()
-    update()
-
-
-def solve_with_bfs():
-    global current_map, color
-    color = COLOR_LIST[1]
-    current_map.solution = FindSolution(current_map).bfs()
-    update()
-
-
-def update():
-    status_label.set_text("STATUS: " + current_map.solution["Status"])
-    path_length_label.set_text("PATH LENGTH: " + str(current_map.solution["Path length"]))
-    no_of_visited_cells_label.set_text("NO OF VISITED CELLS: " + str(current_map.solution["No of visited cells"]))
-
-
-current_map = Map(DEFAULT_SIZE, DEFAULT_PROBABILITY)
-
-# Create frame and control UI
-frame = simplegui.create_frame('Assignment 1', FRAME_WIDTH, FRAME_WIDTH)
-frame.add_button("Generate Map", generate_map, 100)
-frame.set_draw_handler(draw_handler)
-input_size = frame.add_input('Size', input_handler, 50)
-input_size.set_text(str(DEFAULT_SIZE))
-input_probability = frame.add_input("Probability", input_handler, 50)
-input_probability.set_text(str(DEFAULT_PROBABILITY))
-
-# Algorithms
-frame.add_label("")
-frame.add_label("Algorithm")
-frame.add_button("DFS", solve_with_dfs, 100)
-frame.add_button("BFS", solve_with_bfs, 100)
-
-# Display status
-frame.add_label("")
-status_label = frame.add_label("STATUS: N/A")
-no_of_visited_cells_label = frame.add_label("NO OF VISITED CELLS: N/A")
-path_length_label = frame.add_label("PATH LENGTH: N/A")
+    def find_heuristic(self, cell, heuristic):
+        (x1, y1) = cell
+        (x2, y2) = self.end_position
+        if heuristic == "euclidean":
+            return math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)
+        elif heuristic == "manhattan":
+            return abs(x1 - x2) + abs(y1 - y2)
 
 
-frame.start()
+current_map = Map(500, 0.2)
+
+print("--------------------------------\nUsing DFS")
+current_map.solution = FindSolution(current_map).dfs()
+current_map.print_solution()
+print("--------------------------------\nUsing BFS")
+current_map.solution = FindSolution(current_map).bfs()
+current_map.print_solution()
+print("--------------------------------\nUsing A* Euclidean")
+current_map.solution = FindSolution(current_map).a_star("euclidean")
+current_map.print_solution()
+print("--------------------------------\nUsing A* Manhattan")
+current_map.solution = FindSolution(current_map).a_star("manhattan")
+current_map.print_solution()
