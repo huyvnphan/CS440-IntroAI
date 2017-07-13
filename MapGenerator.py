@@ -9,9 +9,11 @@ import numpy
 import queue
 
 FRAME_WIDTH = 700
-DEFAULT_SIZE = 10
-DEFAULT_PROBABILITY = 0.6
-
+DEFAULT_SIZE = 60
+DEFAULT_PROBABILITY = 0.2
+COLOR_LIST = [["#F44336", "#FFCDD2"], ["#2196F3", "#BBDEFB"], ["#4CAF50", "#C8E6C9"],
+              ["#FF9800", "#FFE0B2"], ["#E91E63", "#F8BBD0"], ["#9C27B0", "#E1BEE7"]]
+color = []
 
 class Map:
     def __init__(self, size, probability):
@@ -85,10 +87,10 @@ class Map:
                     canvas.draw_polygon(points, 1, "Black", "#00FF00")
                 # Draw path from start to finish
                 elif (x, y) in self.solution["Path"]:
-                    canvas.draw_polygon(points, 1, "Black", "#F44336")
+                    canvas.draw_polygon(points, 1, "Black", color[0])
                 # Draw visited cells
                 elif (x, y) in self.solution["Visited cells"] and (x, y) not in self.solution["Path"]:
-                    canvas.draw_polygon(points, 1, "Black", "#FFCDD2")
+                    canvas.draw_polygon(points, 1, "Black", color[1])
                 # Draw empty cells
                 elif self.map[x, y] == 0:
                     canvas.draw_polygon(points, 1, "Black", "White")
@@ -181,7 +183,6 @@ def generate_map():
     global current_map
     current_map = Map(int(input_size.get_text()), float(input_probability.get_text()))
     update()
-    return
 
 
 def draw_handler(canvas):
@@ -189,17 +190,19 @@ def draw_handler(canvas):
 
 
 def input_handler():
-    return
+    pass
 
 
 def solve_with_dfs():
-    global current_map
+    global current_map, color
+    color = COLOR_LIST[0]
     current_map.solution = FindSolution(current_map).dfs()
     update()
 
 
 def solve_with_bfs():
-    global current_map
+    global current_map, color
+    color = COLOR_LIST[1]
     current_map.solution = FindSolution(current_map).bfs()
     update()
 
