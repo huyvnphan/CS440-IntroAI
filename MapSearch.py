@@ -224,14 +224,22 @@ class FindSolution:
                 "No of visited cells": len(visited), "Path": [], "Path length": "N/A"}
 
     def find_heuristic(self, cell, heuristic):
-        x1 = cell[0]
-        y1 = cell[1]
-        x2 = self.end_position[0]
-        y2 = self.end_position[1]
+        (x1, y1) = cell
+        (x2, y2) = self.end_position
         if heuristic == "euclidean":
             return math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)
         elif heuristic == "manhattan":
             return abs(x1 - x2) + abs(y1 - y2)
+        elif heuristic == "max":
+            return max(self.find_heuristic(cell, "euclidean"), self.find_heuristic(cell, "manhattan"))
+        elif heuristic == "min":
+            return min(self.find_heuristic(cell, "euclidean"), self.find_heuristic(cell, "manhattan"))
+        elif heuristic == "alpha":
+            alpha = 0.8
+            return alpha*self.find_heuristic(cell, "euclidean") + (1-alpha)*self.find_heuristic(cell, "manhattan")
+        elif heuristic == "beta":
+            beta = 1.8
+            return (abs(x1 - x2)**beta + abs(y1 - y2)**beta)**(1/beta)
 
 
 def generate_map():
@@ -252,6 +260,7 @@ def solve_with_dfs():
     global current_map, color
     color = COLOR_LIST[0]
     current_map.solution = FindSolution(current_map).dfs()
+    algorithm_used.set_text("Algorithm used: DFS")
     update()
 
 
@@ -259,6 +268,7 @@ def solve_with_bfs():
     global current_map, color
     color = COLOR_LIST[1]
     current_map.solution = FindSolution(current_map).bfs()
+    algorithm_used.set_text("Algorithm used: BFS")
     update()
 
 
@@ -266,6 +276,8 @@ def solve_with_a_star_euclidean():
     global current_map, color
     color = COLOR_LIST[2]
     current_map.solution = FindSolution(current_map).a_star("euclidean")
+    algorithm_used.set_text("Algorithm used: A* Euclidean")
+
     update()
 
 
@@ -273,6 +285,7 @@ def solve_with_a_star_manhattan():
     global current_map, color
     color = COLOR_LIST[3]
     current_map.solution = FindSolution(current_map).a_star("manhattan")
+    algorithm_used.set_text("Algorithm used: A* Manhattan")
     update()
 
 
@@ -303,6 +316,7 @@ frame.add_button("A* Manhattan", solve_with_a_star_manhattan, 100)
 
 # Display status
 frame.add_label("")
+algorithm_used = frame.add_label("Algorithm used: N/A")
 status_label = frame.add_label("STATUS: N/A")
 no_of_visited_cells_label = frame.add_label("NO OF VISITED CELLS: N/A")
 path_length_label = frame.add_label("PATH LENGTH: N/A")

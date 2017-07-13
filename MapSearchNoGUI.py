@@ -185,9 +185,18 @@ class FindSolution:
             return math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)
         elif heuristic == "manhattan":
             return abs(x1 - x2) + abs(y1 - y2)
+        elif heuristic == "max":
+            return max(self.find_heuristic(cell, "euclidean"), self.find_heuristic(cell, "manhattan"))
+        elif heuristic == "min":
+            return min(self.find_heuristic(cell, "euclidean"), self.find_heuristic(cell, "manhattan"))
+        elif heuristic == "alpha":
+            alpha = 0.8
+            return alpha*self.find_heuristic(cell, "euclidean") + (1-alpha)*self.find_heuristic(cell, "manhattan")
+        elif heuristic == "beta":
+            beta = 1.8
+            return (abs(x1 - x2)**beta + abs(y1 - y2)**beta)**(1/beta)
 
-
-current_map = Map(500, 0.2)
+current_map = Map(200, 0.2)
 
 print("--------------------------------\nUsing DFS")
 current_map.solution = FindSolution(current_map).dfs()
@@ -201,3 +210,53 @@ current_map.print_solution()
 print("--------------------------------\nUsing A* Manhattan")
 current_map.solution = FindSolution(current_map).a_star("manhattan")
 current_map.print_solution()
+
+# Question 8
+# print("Using Max Distance")
+# p = 0.1
+# while p < 0.44:
+#     number_of_visited_cells = []
+#     for j in range(0, 100):
+#         current_map = Map(100, p)
+#         current_map.solution = FindSolution(current_map).a_star("max")
+#         if type(current_map.solution["No of visited cells"]) == int:
+#             number_of_visited_cells.append(current_map.solution["No of visited cells"])
+#     print(numpy.mean(number_of_visited_cells))
+#     p += 0.05
+#
+# print("\nUsing Min Distance")
+# p = 0.1
+# while p < 0.44:
+#     number_of_visited_cells = []
+#     for j in range(0, 100):
+#         current_map = Map(100, p)
+#         current_map.solution = FindSolution(current_map).a_star("min")
+#         if type(current_map.solution["No of visited cells"]) == int:
+#             number_of_visited_cells.append(current_map.solution["No of visited cells"])
+#     print(numpy.mean(number_of_visited_cells))
+#     p += 0.05
+
+# Question 8
+# print("\nUsing Alpha")
+# p = 0.1
+# while p < 0.44:
+#     number_of_visited_cells = []
+#     for j in range(0, 100):
+#         current_map = Map(100, p)
+#         current_map.solution = FindSolution(current_map).a_star("alpha")
+#         if type(current_map.solution["No of visited cells"]) == int:
+#             number_of_visited_cells.append(current_map.solution["No of visited cells"])
+#     print(numpy.mean(number_of_visited_cells))
+#     p += 0.05
+#
+# print("\nUsing Beta")
+# p = 0.1
+# while p < 0.44:
+#     number_of_visited_cells = []
+#     for j in range(0, 100):
+#         current_map = Map(100, p)
+#         current_map.solution = FindSolution(current_map).a_star("alpha")
+#         if type(current_map.solution["No of visited cells"]) == int:
+#             number_of_visited_cells.append(current_map.solution["No of visited cells"])
+#     print(numpy.mean(number_of_visited_cells))
+#     p += 0.05
