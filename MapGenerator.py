@@ -5,11 +5,12 @@ except ImportError:
     import SimpleGUICS2Pygame.simpleguics2pygame as simplegui
 
 # Import Matrix generator module
-import numpy, queue
+import numpy
+import queue
 
-FRAME_WIDTH = 500
-DEFAULT_SIZE = 50
-DEFAULT_PROBABILITY = 0.2
+FRAME_WIDTH = 700
+DEFAULT_SIZE = 10
+DEFAULT_PROBABILITY = 0.6
 
 
 class Map:
@@ -37,7 +38,8 @@ class Map:
         self.map[0, 0] = self.map[size - 1, size - 1] = 0
 
         # Dictionary of solution information
-        self.solution = {"Status": "N/A", "Visited cells": [], "Path": [], "Path length": "N/A"}
+        self.solution = {"Status": "N/A", "Visited cells": [], "No of visited cells": "N/A", "Path": [],
+                         "Path length": "N/A"}
 
     def connected_cells(self, cell):
         """
@@ -121,23 +123,29 @@ class FindSolution:
         Find path using Depth First Search
         :return: list of status, visited cell, path, and path length
         """
-        stack = [self.start_position]
-        visited = set(self.start_position)
+        a_stack = queue.LifoQueue()
+        visited = set()
+
+        a_stack.put(self.start_position)
+        visited.add(self.start_position)
+
         parent_cell = {}
 
-        while stack:
-            cell = stack.pop()
+        while not a_stack.empty():
+            cell = a_stack.get()
             if cell == self.end_position:
                 path = self.build_path(parent_cell)
-                return {"Status": "Found Path", "Visited cells": visited, "Path": path, "Path length": len(path)}
+                return {"Status": "Found Path", "Visited cells": visited,
+                        "No of visited cells": len(visited), "Path": path, "Path length": len(path)}
 
             for child in self.a_map.connected_cells(cell):
                 if child not in visited:
                     parent_cell[child] = cell
-                    stack.append(child)
                     visited.add(child)
+                    a_stack.put(child)
 
-        return {"Status": "Path Not Found!", "Visited cells": visited, "Path": [], "Path length": "N/A"}
+        return {"Status": "Path Not Found!", "Visited cells": visited,
+                "No of visited cells": len(visited), "Path": [], "Path length": "N/A"}
 
     def bfs(self):
         """
@@ -145,23 +153,28 @@ class FindSolution:
         :return: list of status, visited cell, path, and path length
         """
         a_queue = queue.Queue()
+        visited = set()
+
         a_queue.put(self.start_position)
-        visited = set(self.start_position)
+        visited.add(self.start_position)
+
         parent_cell = {}
 
         while not a_queue.empty():
             cell = a_queue.get()
             if cell == self.end_position:
                 path = self.build_path(parent_cell)
-                return {"Status": "Found Path", "Visited cells": visited, "Path": path, "Path length": len(path)}
+                return {"Status": "Found Path", "Visited cells": visited,
+                        "No of visited cells": len(visited), "Path": path, "Path length": len(path)}
 
             for child in self.a_map.connected_cells(cell):
                 if child not in visited:
                     parent_cell[child] = cell
-                    a_queue.put(child)
                     visited.add(child)
+                    a_queue.put(child)
 
-        return {"Status": "Path Not Found!", "Visited cells": visited, "Path": [], "Path length": "N/A"}
+        return {"Status": "Found Path", "Visited cells": visited,
+                "No of visited cells": len(visited), "Path": [], "Path length": "N/A"}
 
 
 def generate_map():
@@ -182,6 +195,7 @@ def input_handler():
 def solve_with_dfs():
     global current_map
     current_map.solution = FindSolution(current_map).dfs()
+    print(current_map.solution["Visited cells"])
     update()
 
 
@@ -194,6 +208,7 @@ def solve_with_bfs():
 def update():
     status_label.set_text("STATUS: " + current_map.solution["Status"])
     path_length_label.set_text("PATH LENGTH: " + str(current_map.solution["Path length"]))
+    no_of_visited_cells_label.set_text("NO OF VISITED CELLS: " + str(current_map.solution["No of visited cells"]))
 
 
 current_map = Map(DEFAULT_SIZE, DEFAULT_PROBABILITY)
@@ -217,5 +232,6 @@ frame.add_button("BFS", solve_with_bfs, 100)
 frame.add_label("")
 status_label = frame.add_label("STATUS: N/A")
 path_length_label = frame.add_label("PATH LENGTH: N/A")
+no_of_visited_cells_label = frame.add_label("NO OF VISITED CELLS: N/A")
 
 frame.start()
