@@ -50,7 +50,7 @@ class Map:
         x = cell[0]
         y = cell[1]
         connected_cells = set()
-        all_possible_cells = [(x, y - 1), (x + 1, y), (x, y + 1), (x - 1, y)]
+        all_possible_cells = [(x, y + 1), (x - 1, y), (x, y - 1), (x + 1, y)]
         for (i, j) in all_possible_cells:
             if self.in_bounds((i, j)):
                 if self.map[i, j] == 0:
@@ -144,7 +144,7 @@ class FindSolution:
                     visited.add(child)
                     a_stack.put(child)
 
-        return {"Status": "Path Not Found!", "Visited cells": visited,
+        return {"Status": "Path Not Found!!!", "Visited cells": visited,
                 "No of visited cells": len(visited), "Path": [], "Path length": "N/A"}
 
     def bfs(self):
@@ -173,7 +173,7 @@ class FindSolution:
                     visited.add(child)
                     a_queue.put(child)
 
-        return {"Status": "Found Path", "Visited cells": visited,
+        return {"Status": "Path Not Found!!!", "Visited cells": visited,
                 "No of visited cells": len(visited), "Path": [], "Path length": "N/A"}
 
 
@@ -195,7 +195,6 @@ def input_handler():
 def solve_with_dfs():
     global current_map
     current_map.solution = FindSolution(current_map).dfs()
-    print(current_map.solution["Visited cells"])
     update()
 
 
@@ -231,7 +230,8 @@ frame.add_button("BFS", solve_with_bfs, 100)
 # Display status
 frame.add_label("")
 status_label = frame.add_label("STATUS: N/A")
-path_length_label = frame.add_label("PATH LENGTH: N/A")
 no_of_visited_cells_label = frame.add_label("NO OF VISITED CELLS: N/A")
+path_length_label = frame.add_label("PATH LENGTH: N/A")
+
 
 frame.start()
