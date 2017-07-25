@@ -277,7 +277,6 @@ def solve_with_a_star_euclidean():
     color = COLOR_LIST[2]
     current_map.solution = FindSolution(current_map).a_star("euclidean")
     algorithm_used.set_text("Algorithm used: A* Euclidean")
-
     update()
 
 

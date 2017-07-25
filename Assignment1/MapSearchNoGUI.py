@@ -196,7 +196,7 @@ class FindSolution:
             beta = 1.8
             return (abs(x1 - x2)**beta + abs(y1 - y2)**beta)**(1/beta)
 
-current_map = Map(200, 0.2)
+current_map = Map(2000, 0.2)
 
 print("--------------------------------\nUsing DFS")
 current_map.solution = FindSolution(current_map).dfs()
